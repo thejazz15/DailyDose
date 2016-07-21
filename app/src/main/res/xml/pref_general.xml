@@ -1,0 +1,13 @@
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ListPreference
+        android:defaultValue="@string/pref_default_country"
+        android:entries="@array/pref_country_options"
+        android:entryValues="@array/pref_country_values"
+        android:key="@string/pref_key_country"
+        android:title="@string/pref_title_country" />
+
+</PreferenceScreen>
