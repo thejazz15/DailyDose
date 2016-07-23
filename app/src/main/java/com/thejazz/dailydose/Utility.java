@@ -3,7 +3,6 @@ package com.thejazz.dailydose;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import android.util.Log;
 
 import org.json.JSONException;
 import org.json.JSONObject;

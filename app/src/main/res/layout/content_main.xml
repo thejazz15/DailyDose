@@ -14,7 +14,7 @@
         android:id="@+id/shows_list_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:divider="@color/colorPrimary"
+        android:divider="@color/colorPrimaryDark"
         android:dividerHeight="1dp" />
 
 </android.support.v4.widget.SwipeRefreshLayout>
