@@ -8,6 +8,8 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.support.annotation.Nullable;
+import android.util.Log;
+
 import com.thejazz.dailydose.data.TvShowsContract.TvShowsEntry;
 /**
  * Created by TheJazz on 20/07/16.
@@ -15,23 +17,22 @@ import com.thejazz.dailydose.data.TvShowsContract.TvShowsEntry;
 public class TvShowProvider extends ContentProvider {
 
     public static final int SHOWS = 101;
-    public static final int SHOWS_WITH_COUNTRY = 102;
-    public static final int SHOWS_WITH_COUNTRY_AND_DATE = 103;
-    public static final int SHOWS_WITH_SHOW_ID = 104;
-    public static final int SHOWS_ID = 105;
+    public static final int SHOW_WITH_EPISODE_ID = 103;
+    public static final int SHOWS_WITH_COUNTRY_AND_DATE = 104;
+    public static final int SHOWS_WITH_SHOW_ID = 105;
+    public static final int SHOWS_ID = 106;
 
     public static final UriMatcher sUriMatcher = buildUriMatcher();
-
-    public static TvShowDbHelper myHelper;
+    private TvShowDbHelper myHelper;
 
     private static UriMatcher buildUriMatcher(){
-        UriMatcher matcher = new UriMatcher(UriMatcher.NO_MATCH);
+        final UriMatcher matcher = new UriMatcher(UriMatcher.NO_MATCH);
         String authority = TvShowsContract.CONTENT_AUTHORITY;
         matcher.addURI(authority, TvShowsContract.PATH_SHOWS,SHOWS);
-        matcher.addURI(authority, TvShowsContract.PATH_SHOWS + "/*",SHOWS_WITH_COUNTRY);
+        matcher.addURI(authority, TvShowsContract.PATH_SHOWS + "/episode/id/*",SHOW_WITH_EPISODE_ID);
         matcher.addURI(authority, TvShowsContract.PATH_SHOWS + "/*/*",SHOWS_WITH_COUNTRY_AND_DATE);
-        matcher.addURI(authority, TvShowsContract.PATH_SHOWS + "/#",SHOWS_WITH_SHOW_ID);
-        matcher.addURI(authority, TvShowsContract.PATH_SHOWS + "/id/#",SHOWS_ID);
+        matcher.addURI(authority, TvShowsContract.PATH_SHOWS + "/show/*",SHOWS_WITH_SHOW_ID);
+        matcher.addURI(authority, TvShowsContract.PATH_SHOWS + "/*",SHOWS_ID);
         return matcher;
     }
 
@@ -45,34 +46,56 @@ public class TvShowProvider extends ContentProvider {
     @Override
     public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
         Cursor retCursor;
-        String country_code, date, show_id;
-        switch (sUriMatcher.match(uri)){
+        SQLiteDatabase db = myHelper.getReadableDatabase();
+        String country_code, date, show_id, episode_id;
+        int match = sUriMatcher.match(uri);
+        Log.v("QUERY URI MATCHED", "Matched uri is " + uri.toString());
+        Log.v("QUERY INTEGER MATCHED", "Matched integer is " + Integer.toString(match));
+        switch (match){
+            case SHOW_WITH_EPISODE_ID:
+                Log.v("QUERY from CP", "In matched EPISODE__ID");
+                episode_id = TvShowsEntry.getEpisodeIdFromUri(uri);
+                retCursor = db.query(TvShowsEntry.TABLE_NAME,
+                        projection,
+                        TvShowsEntry.COLUMN_EPISODE_ID + " = ? ",
+                        new String[]{episode_id},
+                        null,
+                        null,
+                        sortOrder);
+                break;
+            case SHOWS_WITH_SHOW_ID:
+                show_id = TvShowsEntry.getShowIdFromUri(uri);
+                retCursor = db.query(TvShowsEntry.TABLE_NAME,
+                        projection,
+                        TvShowsEntry.COLUMN_SHOW_ID + " = ? ",
+                        new String[]{show_id},
+                        null,
+                        null,
+                        sortOrder);
+                break;
             case SHOWS_WITH_COUNTRY_AND_DATE:
+                Log.v("QUERY from CP", "In matched COUNTRY_AND_DATE");
                 country_code = TvShowsEntry.getCountryCodeFromUri(uri);
                 date = TvShowsEntry.getDateFromUri(uri);
-                retCursor = myHelper.getReadableDatabase()
-                        .query(TvShowsEntry.TABLE_NAME,
-                                projection,
-                                TvShowsEntry.COLUMN_COUNTRY_CODE + " = ? AND " + TvShowsEntry.COLUMN_AIR_DATE + " = ? ",
-                                new String[]{country_code, date},
-                                null,
-                                null,
-                                sortOrder);
+                retCursor = db.query(TvShowsEntry.TABLE_NAME,
+                        projection,
+                        TvShowsEntry.COLUMN_COUNTRY_CODE + " = ? AND " + TvShowsEntry.COLUMN_AIR_DATE + " = ? ",
+                        new String[]{country_code, date},
+                        null,
+                        null,
+                        sortOrder);
                 break;
-            case SHOWS_WITH_COUNTRY:
-                country_code = TvShowsEntry.getCountryCodeFromUri(uri);
-                retCursor = myHelper.getReadableDatabase()
-                        .query(TvShowsEntry.TABLE_NAME,
-                                projection,
-                                TvShowsEntry.COLUMN_COUNTRY_CODE + " = ? ",
-                                new String[]{country_code},
-                                null,
-                                null,
-                                sortOrder);
+            case SHOWS_ID:
+                retCursor = db.query(TvShowsEntry.TABLE_NAME,
+                        projection,
+                        TvShowsEntry._ID + " = '" + ContentUris.parseId(uri) + "'",
+                        selectionArgs,
+                        null,
+                        null,
+                        sortOrder);
                 break;
             case SHOWS:
-                retCursor = myHelper.getReadableDatabase()
-                        .query(TvShowsEntry.TABLE_NAME,
+                retCursor = db.query(TvShowsEntry.TABLE_NAME,
                                 projection,
                                 selection,
                                 selectionArgs,
@@ -80,28 +103,8 @@ public class TvShowProvider extends ContentProvider {
                                 null,
                                 sortOrder);
                 break;
-            case SHOWS_WITH_SHOW_ID:
-                show_id = TvShowsEntry.getShowIdFromUri(uri);
-                retCursor = myHelper.getReadableDatabase()
-                        .query(TvShowsEntry.TABLE_NAME,
-                                projection,
-                                TvShowsEntry.COLUMN_SHOW_ID + " = ? ",
-                                new String[]{show_id},
-                                null,
-                                null,
-                                sortOrder);
-                break;
-            case SHOWS_ID:
-                retCursor = myHelper.getReadableDatabase()
-                        .query(TvShowsEntry.TABLE_NAME,
-                                projection,
-                                TvShowsEntry._ID + " = '" + ContentUris.parseId(uri) + "'",
-                                selectionArgs,
-                                null,
-                                null,
-                                sortOrder);
-                break;
             default:
+                Log.v("ContentProvider", "No uri matched!");
                 throw new UnsupportedOperationException("Unknown uri:" + uri);
         }
         retCursor.setNotificationUri(getContext().getContentResolver(), uri);
@@ -111,17 +114,17 @@ public class TvShowProvider extends ContentProvider {
     @Nullable
     @Override
     public String getType(Uri uri) {
-        int match = sUriMatcher.match(uri);
+        final int match = sUriMatcher.match(uri);
         switch (match){
             case SHOWS_WITH_COUNTRY_AND_DATE:
-                return TvShowsEntry.CONTENT_ITEM_TYPE;
-            case SHOWS_WITH_COUNTRY:
                 return TvShowsEntry.CONTENT_TYPE;
             case SHOWS:
                 return TvShowsEntry.CONTENT_TYPE;
             case SHOWS_WITH_SHOW_ID:
                 return TvShowsEntry.CONTENT_ITEM_TYPE;
             case SHOWS_ID:
+                return TvShowsEntry.CONTENT_ITEM_TYPE;
+            case SHOW_WITH_EPISODE_ID:
                 return TvShowsEntry.CONTENT_ITEM_TYPE;
             default:
                 throw new UnsupportedOperationException("Unknown uri:" + uri);
@@ -131,7 +134,7 @@ public class TvShowProvider extends ContentProvider {
     @Nullable
     @Override
     public Uri insert(Uri uri, ContentValues contentValues) {
-        SQLiteDatabase db = myHelper.getWritableDatabase();
+        final SQLiteDatabase db = myHelper.getWritableDatabase();
         Uri retUri;
         long _id;
         switch(sUriMatcher.match(uri)){
@@ -152,9 +155,9 @@ public class TvShowProvider extends ContentProvider {
 
     @Override
     public int delete(Uri uri, String selection, String[] selectionArgs) {
-        SQLiteDatabase db = myHelper.getWritableDatabase();
-        long _id;
+        final SQLiteDatabase db = myHelper.getWritableDatabase();
         int rowsDeleted;
+        if ( null == selection ) selection = "1";
         switch(sUriMatcher.match(uri)){
             case SHOWS:
                 rowsDeleted = db.delete(TvShowsEntry.TABLE_NAME, selection, selectionArgs);
@@ -169,8 +172,7 @@ public class TvShowProvider extends ContentProvider {
 
     @Override
     public int update(Uri uri, ContentValues contentValues, String selection, String[] selectionArgs) {
-        SQLiteDatabase db = myHelper.getWritableDatabase();
-        long _id;
+        final SQLiteDatabase db = myHelper.getWritableDatabase();
         int rowsUpdated;
         switch(sUriMatcher.match(uri)){
             case SHOWS:
@@ -186,7 +188,7 @@ public class TvShowProvider extends ContentProvider {
 
     @Override
     public int bulkInsert(Uri uri, ContentValues[] values) {
-        SQLiteDatabase db = myHelper.getWritableDatabase();
+        final SQLiteDatabase db = myHelper.getWritableDatabase();
         long id;
         switch(sUriMatcher.match(uri)){
             case SHOWS:

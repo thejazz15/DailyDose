@@ -35,3 +35,4 @@ public class LoadImageTask extends AsyncTask<String, Void, Bitmap> {
         bmImage.setImageBitmap(result);
     }
 }
+
