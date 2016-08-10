@@ -11,6 +11,7 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.thejazz.dailydose.data.TvShowsContract.TvShowsEntry;
+import com.thejazz.dailydose.data.TvShowsContract.FavsShowEntry;
 /**
  * Created by TheJazz on 20/07/16.
  */
@@ -21,6 +22,8 @@ public class TvShowProvider extends ContentProvider {
     public static final int SHOWS_WITH_COUNTRY_AND_DATE = 104;
     public static final int SHOWS_WITH_SHOW_ID = 105;
     public static final int SHOWS_ID = 106;
+    public static final int FAVS = 107;
+    //public static final int ALL_FAVS = 108;
 
     public static final UriMatcher sUriMatcher = buildUriMatcher();
     private TvShowDbHelper myHelper;
@@ -31,8 +34,9 @@ public class TvShowProvider extends ContentProvider {
         matcher.addURI(authority, TvShowsContract.PATH_SHOWS,SHOWS);
         matcher.addURI(authority, TvShowsContract.PATH_SHOWS + "/episode/id/*",SHOW_WITH_EPISODE_ID);
         matcher.addURI(authority, TvShowsContract.PATH_SHOWS + "/*/*",SHOWS_WITH_COUNTRY_AND_DATE);
-        matcher.addURI(authority, TvShowsContract.PATH_SHOWS + "/show/*",SHOWS_WITH_SHOW_ID);
         matcher.addURI(authority, TvShowsContract.PATH_SHOWS + "/*",SHOWS_ID);
+        matcher.addURI(authority, TvShowsContract.FAV_SHOWS, FAVS);
+        matcher.addURI(authority, TvShowsContract.FAV_SHOWS + "/show/*",SHOWS_WITH_SHOW_ID);
         return matcher;
     }
 
@@ -64,10 +68,10 @@ public class TvShowProvider extends ContentProvider {
                         sortOrder);
                 break;
             case SHOWS_WITH_SHOW_ID:
-                show_id = TvShowsEntry.getShowIdFromUri(uri);
-                retCursor = db.query(TvShowsEntry.TABLE_NAME,
+                show_id = FavsShowEntry.getShowIdFromUri(uri);
+                retCursor = db.query(FavsShowEntry.TABLE_NAME,
                         projection,
-                        TvShowsEntry.COLUMN_SHOW_ID + " = ? ",
+                        FavsShowEntry.COLUMN_SHOW_ID + " = ? ",
                         new String[]{show_id},
                         null,
                         null,
@@ -103,6 +107,15 @@ public class TvShowProvider extends ContentProvider {
                                 null,
                                 sortOrder);
                 break;
+            case FAVS:
+                retCursor = db.query(FavsShowEntry.TABLE_NAME,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null,
+                        null,
+                        sortOrder);
+                break;
             default:
                 Log.v("ContentProvider", "No uri matched!");
                 throw new UnsupportedOperationException("Unknown uri:" + uri);
@@ -121,7 +134,9 @@ public class TvShowProvider extends ContentProvider {
             case SHOWS:
                 return TvShowsEntry.CONTENT_TYPE;
             case SHOWS_WITH_SHOW_ID:
-                return TvShowsEntry.CONTENT_ITEM_TYPE;
+                return FavsShowEntry.CONTENT_ITEM_TYPE;
+            case FAVS:
+                return FavsShowEntry.CONTENT_TYPE;
             case SHOWS_ID:
                 return TvShowsEntry.CONTENT_ITEM_TYPE;
             case SHOW_WITH_EPISODE_ID:
@@ -143,7 +158,16 @@ public class TvShowProvider extends ContentProvider {
                 if(_id > 0)
                     retUri = TvShowsEntry.buildShowUri(_id);
                 else
-                    throw new android.database.SQLException("Could not insert row into" + uri);
+                    throw new android.database.SQLException("Could not insert row into " + uri);
+                break;
+            case FAVS:
+                _id = db.insert(FavsShowEntry.TABLE_NAME, null, contentValues);
+                if(_id > 0) {
+                    Log.v("INSERTED ID", Long.toString(_id) + contentValues.getAsString(FavsShowEntry.COLUMN_SHOW_NAME));
+                    retUri = FavsShowEntry.buildShowUri(_id);
+                }
+                else
+                    throw new android.database.SQLException("Could not insert row into " + uri);
                 break;
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
@@ -162,6 +186,9 @@ public class TvShowProvider extends ContentProvider {
             case SHOWS:
                 rowsDeleted = db.delete(TvShowsEntry.TABLE_NAME, selection, selectionArgs);
                 break;
+            case FAVS:
+                rowsDeleted = db.delete(FavsShowEntry.TABLE_NAME, selection, selectionArgs);
+                break;
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
@@ -177,6 +204,9 @@ public class TvShowProvider extends ContentProvider {
         switch(sUriMatcher.match(uri)){
             case SHOWS:
                 rowsUpdated = db.update(TvShowsEntry.TABLE_NAME, contentValues , selection, selectionArgs);
+                break;
+            case FAVS:
+                rowsUpdated = db.update(FavsShowEntry.TABLE_NAME, contentValues , selection, selectionArgs);
                 break;
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);

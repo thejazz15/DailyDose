@@ -5,13 +5,14 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
+        android:name=".utilities.MyApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".MainActivity"
+            android:name=".activites.MainActivity"
             android:label="@string/app_name"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
@@ -21,24 +22,29 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".TvDetailActivity"
+            android:name=".activites.TvDetailActivity"
             android:label="@string/title_activity_tv_detail"
-            android:parentActivityName=".MainActivity">
+            android:parentActivityName=".activites.MainActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.thejazz.dailydose.MainActivity" />
+                android:value=".activites.MainActivity" />
         </activity>
         <activity
-            android:name=".SettingsActivity"
+            android:name=".activites.SettingsActivity"
             android:label="@string/title_activity_settings"
-            android:parentActivityName=".MainActivity">
+            android:parentActivityName=".activites.MainActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.thejazz.dailydose.MainActivity" />
+                android:value=".activites.MainActivity" />
         </activity>
+
         <provider
-            android:authorities="com.thejazz.dailydose"
-            android:name=".data.TvShowProvider" />
+            android:name=".data.TvShowProvider"
+            android:authorities="com.thejazz.dailydose" />
+
+        <activity android:name=".activites.SearchActivity"
+            android:label="Discover"
+            android:parentActivityName=".activites.MainActivity" />
     </application>
 
 </manifest>

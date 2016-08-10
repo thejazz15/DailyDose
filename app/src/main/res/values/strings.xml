@@ -166,4 +166,13 @@
         <item>GB</item>
     </string-array>
 
+    <string-array name="tabs">
+        <item>TODAY</item>
+        <item>FAVS</item>
+        <item>POPULAR</item>
+    </string-array>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
 </resources>

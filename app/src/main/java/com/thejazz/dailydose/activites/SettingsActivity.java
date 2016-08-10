@@ -1,4 +1,4 @@
-package com.thejazz.dailydose;
+package com.thejazz.dailydose.activites;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -8,6 +8,8 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 import android.view.KeyEvent;
 import android.view.Menu;
+
+import com.thejazz.dailydose.R;
 
 /**
  * A {@link PreferenceActivity} that presents a set of application settings.

@@ -7,6 +7,7 @@ import android.os.AsyncTask;
 import android.util.Log;
 
 import com.thejazz.dailydose.data.TvShowsContract.TvShowsEntry;
+import com.thejazz.dailydose.utilities.Utility;
 
 import org.json.JSONArray;
 import org.json.JSONException;

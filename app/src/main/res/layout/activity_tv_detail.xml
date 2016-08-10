@@ -4,8 +4,9 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="8dp"
-    tools:context="com.thejazz.dailydose.TvDetailActivity">
+    tools:context=".activites.TvDetailActivity">
+
+    <include android:id="@+id/toolbar_detail" layout="@layout/app_bar" />
 
     <TextView
         android:id="@+id/show_name_tv"

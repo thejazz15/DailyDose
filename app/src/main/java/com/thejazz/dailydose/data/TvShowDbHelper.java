@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
 import com.thejazz.dailydose.data.TvShowsContract.TvShowsEntry;
+import com.thejazz.dailydose.data.TvShowsContract.FavsShowEntry;
 
 /**
  * Created by TheJazz on 19/07/16.
@@ -37,10 +38,25 @@ public class TvShowDbHelper extends SQLiteOpenHelper {
                 +TvShowsEntry.COLUMN_IMG_URL+ " TEXT, "
                 + " UNIQUE (" + TvShowsEntry.COLUMN_EPISODE_ID +") ON CONFLICT REPLACE);";
 
+        final String SQL_CREATE_FAVOURITES_TABLE = "CREATE TABLE " + FavsShowEntry.TABLE_NAME + " ("
+                + FavsShowEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                +FavsShowEntry.COLUMN_SHOW_ID + " TEXT NOT NULL, "
+                +FavsShowEntry.COLUMN_SHOW_NAME + " TEXT NOT NULL, "
+                +FavsShowEntry.COLUMN_AIR_DATE + " TEXT, "
+                +FavsShowEntry.COLUMN_AIR_TIME + " TEXT, "
+                +FavsShowEntry.COLUMN_SEASON+ " TEXT, "
+                +FavsShowEntry.COLUMN_EPISODE_NUM+ " TEXT, "
+                +FavsShowEntry.COLUMN_EPISODE_NAME+ " TEXT, "
+                +FavsShowEntry.COLUMN_EPISODE_ID+ " TEXT, "
+                +FavsShowEntry.COLUMN_SUMMARY+ " TEXT, "
+                +FavsShowEntry.COLUMN_IMG_URL+ " TEXT, "
+                + " UNIQUE (" + FavsShowEntry.COLUMN_SHOW_ID +") ON CONFLICT REPLACE);";
+
         Log.v("QUERY CREATED", "Query string created");
 
         try {
             sqLiteDatabase.execSQL(SQL_CREATE_TABLE);
+            sqLiteDatabase.execSQL(SQL_CREATE_FAVOURITES_TABLE);
             Log.v("DB CREATED", SQL_CREATE_TABLE);
         } catch (SQLException e) {
             e.printStackTrace();
@@ -51,6 +67,7 @@ public class TvShowDbHelper extends SQLiteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase sqLiteDatabase, int oldVersion, int newVersion) {
         sqLiteDatabase.execSQL("DROP TABLE IF EXISTS "+TvShowsEntry.TABLE_NAME);
+        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + FavsShowEntry.TABLE_NAME);
         onCreate(sqLiteDatabase);
     }
 }
