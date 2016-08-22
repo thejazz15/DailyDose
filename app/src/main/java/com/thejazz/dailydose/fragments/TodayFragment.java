@@ -1,6 +1,7 @@
 package com.thejazz.dailydose.fragments;
 
 import android.content.ContentValues;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -14,10 +15,13 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
-import android.widget.Toast;
+import android.widget.TextView;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -25,7 +29,8 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonArrayRequest;
 import com.thejazz.dailydose.R;
-import com.thejazz.dailydose.VolleySingleton;
+import com.thejazz.dailydose.utilities.VolleySingleton;
+import com.thejazz.dailydose.activites.SettingsActivity;
 import com.thejazz.dailydose.adapters.TodayListAdapter;
 import com.thejazz.dailydose.data.TvShowsContract;
 import com.thejazz.dailydose.utilities.UrlUtility;
@@ -51,8 +56,8 @@ public class TodayFragment extends Fragment implements LoaderManager.LoaderCallb
     public static SwipeRefreshLayout swipeRefreshLayout;
     private TodayListAdapter myAdapter;
     private String pref_country;
-    //private ProgressBar progressBar;
-
+    private ProgressBar pBar;
+    private TextView noNetTv;
 
     private static final int TV_TODAY_LOADER_ID = 0;
 
@@ -78,7 +83,30 @@ public class TodayFragment extends Fragment implements LoaderManager.LoaderCallb
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         requestQueue = VolleySingleton.getInstance().getRequestQueue();
-        //sendJsonRequest();
+        sendJsonRequest();
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_main, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            Intent intent = new Intent(getActivity(), SettingsActivity.class);
+            startActivity(intent);
+            return true;
+        }
+        if (id == R.id.action_location) {
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -86,7 +114,7 @@ public class TodayFragment extends Fragment implements LoaderManager.LoaderCallb
         super.onResume();
         if (pref_country != null && !pref_country.equals(Utility.getPrefferedCountry(getActivity()))) {
             getLoaderManager().restartLoader(TV_TODAY_LOADER_ID, null, this);
-            //progressBar.setVisibility(View.VISIBLE);
+//            progressBar.setVisibility(View.VISIBLE);
         }
     }
 
@@ -94,15 +122,15 @@ public class TodayFragment extends Fragment implements LoaderManager.LoaderCallb
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.today_layout, container, false);
-        //progressBar = (ProgressBar) view.findViewById(R.id.search_progress);
         swipeRefreshLayout = (SwipeRefreshLayout) view.findViewById(R.id.swiperefresh);
         swipeRefreshLayout.setOnRefreshListener(this);
         recyclerView = (RecyclerView) view.findViewById(R.id.today_rv);
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        //recyclerView.addItemDecoration(new DividerItemDecoration(getActivity(), LinearLayoutManager.VERTICAL));
         myAdapter = new TodayListAdapter(getActivity(), null);
         recyclerView.setAdapter(myAdapter);
-        //progressBar.setVisibility(View.VISIBLE);
-        sendJsonRequest();
+        pBar = (ProgressBar) view.findViewById(R.id.search_progress);
+        noNetTv = (TextView) view.findViewById(R.id.no_internet_tv);
         return view;
     }
 
@@ -129,11 +157,16 @@ public class TodayFragment extends Fragment implements LoaderManager.LoaderCallb
         request = new JsonArrayRequest(Request.Method.GET, url, null, new Response.Listener<JSONArray>() {
             @Override
             public void onResponse(JSONArray response) {
+                pBar.setVisibility(View.GONE);
                 parseJsonResponse(response);
             }
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
+                pBar.setVisibility(View.GONE);
+                //noNetTv.setVisibility(View.VISIBLE);
+//                String failString = Utility.VolleyErrorMessage(error);
+//                noNetTv.setText(failString);
                 //Toast.makeText(getActivity(), "ERROR" + error, Toast.LENGTH_LONG).show();
             }
         });
@@ -188,6 +221,10 @@ public class TodayFragment extends Fragment implements LoaderManager.LoaderCallb
             ContentValues[] cvArray = new ContentValues[vector.size()];
             vector.toArray(cvArray);
             inserted = getActivity().getContentResolver().bulkInsert(TvShowsContract.TvShowsEntry.CONTENT_URI, cvArray);
+            String todayDate = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
+            getActivity().getContentResolver().delete(TvShowsContract.TvShowsEntry.CONTENT_URI,
+                    TvShowsContract.TvShowsEntry.COLUMN_AIR_DATE + " < ? ",
+                    new String[]{todayDate});
         }
     }
 
@@ -208,7 +245,7 @@ public class TodayFragment extends Fragment implements LoaderManager.LoaderCallb
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
         myAdapter.swapCursor(data);
-        //setLoadingtoFalse();
+//        setLoadingtoFalse();
         setRefreshingtoFalse();
     }
 
