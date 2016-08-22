@@ -1,4 +1,4 @@
-package com.thejazz.dailydose;
+package com.thejazz.dailydose.utilities;
 
 import android.graphics.Bitmap;
 import android.support.v4.util.LruCache;
@@ -6,7 +6,6 @@ import android.support.v4.util.LruCache;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.ImageLoader;
 import com.android.volley.toolbox.Volley;
-import com.thejazz.dailydose.utilities.MyApplication;
 
 /**
  * Created by TheJazz on 02/08/16.

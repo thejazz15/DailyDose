@@ -1,6 +1,7 @@
 package com.thejazz.dailydose.adapters;
 
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -13,7 +14,8 @@ import android.widget.TextView;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageLoader;
 import com.thejazz.dailydose.R;
-import com.thejazz.dailydose.VolleySingleton;
+import com.thejazz.dailydose.utilities.VolleySingleton;
+import com.thejazz.dailydose.activites.PopularTvDetailActivity;
 import com.thejazz.dailydose.fragments.FavouritesFragment;
 import com.thejazz.dailydose.utilities.Utility;
 
@@ -60,7 +62,8 @@ public class FavouritesAdapter extends RecyclerView.Adapter<FavouritesAdapter.My
         mCursor.moveToPosition(position);
         holder.showName.setText(mCursor.getString(FavouritesFragment.COL_SHOW_NAME));
         holder.airDate.setText(Utility.formatAirDate(mCursor.getString(FavouritesFragment.COL_AIR_DATE)));
-        if(!mCursor.getString(FavouritesFragment.COL_AIR_DATE).equals("N/A")){
+        Log.v("FavouritesAdapter",mCursor.getString(FavouritesFragment.COL_SHOW_NAME) + " , "+mCursor.getString(FavouritesFragment.COL_EPISODE_NAME));
+        if(!mCursor.getString(FavouritesFragment.COL_EPISODE_NAME).equals("N/A")){
             holder.episodeName.setVisibility(View.VISIBLE);
             holder.episodeName.setText(mCursor.getString(FavouritesFragment.COL_EPISODE_NAME));
             holder.episodeTitle.setVisibility(View.VISIBLE);
@@ -81,10 +84,12 @@ public class FavouritesAdapter extends RecyclerView.Adapter<FavouritesAdapter.My
 
                 @Override
                 public void onErrorResponse(VolleyError error) {
-                    holder.image.setImageResource(R.drawable.ic_info_black_24dp);
+
                 }
             });
         }
+        else
+            holder.image.setImageResource(R.drawable.ic_info_black_24dp);
     }
 
     @Override
@@ -92,7 +97,7 @@ public class FavouritesAdapter extends RecyclerView.Adapter<FavouritesAdapter.My
         return (mCursor == null) ? 0 : mCursor.getCount();
     }
 
-    public class MyViewHolder extends RecyclerView.ViewHolder{
+    public class MyViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         ImageView image;
         TextView showName, airDate, episodeName, season, episodeNum, seasonTitle, episodeTitle, dash;
         public MyViewHolder(View itemView) {
@@ -106,6 +111,17 @@ public class FavouritesAdapter extends RecyclerView.Adapter<FavouritesAdapter.My
             seasonTitle = (TextView) itemView.findViewById(R.id.season_title_tv);
             episodeTitle = (TextView) itemView.findViewById(R.id.epi_title_tv);
             dash = (TextView) itemView.findViewById(R.id.dash);
+            itemView.setOnClickListener(this);
+        }
+
+        @Override
+        public void onClick(View view) {
+            if (mCursor != null && mCursor.moveToPosition(getAdapterPosition())) {
+                Intent intent = new Intent(mContext.getApplicationContext(), PopularTvDetailActivity.class)
+                        .putExtra("_ID", mCursor.getInt(0));
+//                Intent intent = new Intent(mContext.getApplicationContext(), ScrollingActivity.class);
+                mContext.startActivity(intent);
+            }
         }
     }
 }

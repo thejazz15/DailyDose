@@ -27,11 +27,7 @@
 
         <!--<include layout="@layout/content_main" />-->
 
-        <com.thejazz.dailydose.tabs.SlidingTabLayout
-            android:id="@+id/tabs"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-        </com.thejazz.dailydose.tabs.SlidingTabLayout>
+
 
         <android.support.v4.view.ViewPager
             android:id="@+id/pager"
@@ -41,6 +37,13 @@
             tools:context=".activites.MainActivity">
         </android.support.v4.view.ViewPager>
 
+        <com.thejazz.dailydose.tabs.SlidingTabLayout
+            android:id="@+id/tabs"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="bottom">
+        </com.thejazz.dailydose.tabs.SlidingTabLayout>
+
     </LinearLayout>
 
     <android.support.design.widget.FloatingActionButton
@@ -48,7 +51,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
-        android:layout_margin="@dimen/fab_margin"
+        android:layout_marginTop="@dimen/fab_margin"
+        android:layout_marginLeft="@dimen/fab_margin"
+        android:layout_marginRight="@dimen/fab_margin"
+        android:layout_marginBottom="56dp"
         android:src="@drawable/ic_playlist_add_black_48dp" />
 
 </android.support.design.widget.CoordinatorLayout>

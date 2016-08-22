@@ -23,7 +23,7 @@ public class TvShowProvider extends ContentProvider {
     public static final int SHOWS_WITH_SHOW_ID = 105;
     public static final int SHOWS_ID = 106;
     public static final int FAVS = 107;
-    //public static final int ALL_FAVS = 108;
+    public static final int FAVS_ID = 108;
 
     public static final UriMatcher sUriMatcher = buildUriMatcher();
     private TvShowDbHelper myHelper;
@@ -37,6 +37,8 @@ public class TvShowProvider extends ContentProvider {
         matcher.addURI(authority, TvShowsContract.PATH_SHOWS + "/*",SHOWS_ID);
         matcher.addURI(authority, TvShowsContract.FAV_SHOWS, FAVS);
         matcher.addURI(authority, TvShowsContract.FAV_SHOWS + "/show/*",SHOWS_WITH_SHOW_ID);
+        matcher.addURI(authority, TvShowsContract.FAV_SHOWS + "/*",FAVS_ID);
+
         return matcher;
     }
 
@@ -93,6 +95,15 @@ public class TvShowProvider extends ContentProvider {
                 retCursor = db.query(TvShowsEntry.TABLE_NAME,
                         projection,
                         TvShowsEntry._ID + " = '" + ContentUris.parseId(uri) + "'",
+                        selectionArgs,
+                        null,
+                        null,
+                        sortOrder);
+                break;
+            case FAVS_ID:
+                retCursor = db.query(FavsShowEntry.TABLE_NAME,
+                        projection,
+                        FavsShowEntry._ID + " = '" + ContentUris.parseId(uri) + "'",
                         selectionArgs,
                         null,
                         null,
@@ -220,13 +231,27 @@ public class TvShowProvider extends ContentProvider {
     public int bulkInsert(Uri uri, ContentValues[] values) {
         final SQLiteDatabase db = myHelper.getWritableDatabase();
         long id;
+        int returnCount = 0;
         switch(sUriMatcher.match(uri)){
             case SHOWS:
                 db.beginTransaction();
-                int returnCount = 0;
                 try {
                     for (ContentValues value : values) {
                         id = db.insert(TvShowsEntry.TABLE_NAME, null, value);
+                        if (id != -1)
+                            returnCount++;
+                    }
+                    db.setTransactionSuccessful();
+                }finally {
+                    db.endTransaction();
+                }
+                getContext().getContentResolver().notifyChange(uri, null);
+                return returnCount;
+            case FAVS:
+                db.beginTransaction();
+                try {
+                    for (ContentValues value : values) {
+                        id = db.insert(FavsShowEntry.TABLE_NAME, null, value);
                         if (id != -1)
                             returnCount++;
                     }
@@ -240,4 +265,6 @@ public class TvShowProvider extends ContentProvider {
                 return super.bulkInsert(uri, values);
         }
     }
+
+
 }

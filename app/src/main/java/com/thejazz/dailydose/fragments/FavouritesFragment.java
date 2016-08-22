@@ -1,6 +1,6 @@
 package com.thejazz.dailydose.fragments;
 
-import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -12,19 +12,23 @@ import android.support.v4.content.Loader;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
-import com.android.volley.RequestQueue;
 import com.thejazz.dailydose.R;
 import com.thejazz.dailydose.adapters.FavouritesAdapter;
-import com.thejazz.dailydose.adapters.TodayListAdapter;
 import com.thejazz.dailydose.data.TvShowsContract;
+import com.thejazz.dailydose.services.FetchFavouritesService;
 
 public class FavouritesFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
 
     private RecyclerView recyclerView;
     private FavouritesAdapter favouritesAdapter;
+
 
     private static final int TV_FAVS_LOADER_ID = 0;
 
@@ -55,9 +59,38 @@ public class FavouritesFragment extends Fragment implements LoaderManager.Loader
     }
 
     @Override
+    public void onStart() {
+        super.onStart();
+//        syncFavourites();
+    }
+
+    @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
+    }
 
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.favs_menu, menu);
+    }
+
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if(id == R.id.action_sync){
+            Toast.makeText(getActivity(), "Sync button clicked", Toast.LENGTH_SHORT).show();
+            syncFavourites();
+            getLoaderManager().restartLoader(TV_FAVS_LOADER_ID, null ,this);
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void syncFavourites(){
+        Intent intent = new Intent(getActivity(), FetchFavouritesService.class);
+        getActivity().startService(intent);
     }
 
     @Override
@@ -72,20 +105,23 @@ public class FavouritesFragment extends Fragment implements LoaderManager.Loader
         View view = inflater.inflate(R.layout.fragment_favourites, container, false);
         recyclerView = (RecyclerView) view.findViewById(R.id.fav_rv);
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        //recyclerView.addItemDecoration(new DividerItemDecoration(getActivity(), LinearLayoutManager.VERTICAL));
         favouritesAdapter = new FavouritesAdapter(getActivity(), null);
         recyclerView.setAdapter(favouritesAdapter);
         return view;
     }
 
+
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        syncFavourites();
         Uri uri = TvShowsContract.FavsShowEntry.CONTENT_URI;
         return new CursorLoader(getActivity(),
                 uri,
                 TV_SHOW_COLUMNS,
                 null,
                 null,
-                null
+                TvShowsContract.FavsShowEntry.COLUMN_AIR_DATE + " ASC"
         );
     }
 

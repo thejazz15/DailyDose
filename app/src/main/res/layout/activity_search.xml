@@ -20,7 +20,7 @@
             android:layout_margin="4dp"
             android:layout_height="wrap_content"
             android:layout_weight="3"
-            android:maxLines="1"
+            android:singleLine="true"
             android:hint="Search TV Shows"/>
         <Button
             android:id="@+id/search_btn"
@@ -34,7 +34,9 @@
     <ProgressBar
         android:id="@+id/search_progress"
         android:layout_width="match_parent"
-        style="@style/GenericProgressIndicator"
+        android:theme="@style/CircularProgress"
+        style="@style/Widget.AppCompat.ProgressBar"
+        android:layout_height="wrap_content"
         android:foregroundGravity="center"/>
 
     <TextView

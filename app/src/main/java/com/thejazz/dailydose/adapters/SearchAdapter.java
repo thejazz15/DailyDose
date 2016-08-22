@@ -2,6 +2,7 @@ package com.thejazz.dailydose.adapters;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.net.Uri;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -20,15 +21,12 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageLoader;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.thejazz.dailydose.R;
-import com.thejazz.dailydose.VolleySingleton;
-import com.thejazz.dailydose.activites.SearchActivity;
+import com.thejazz.dailydose.utilities.VolleySingleton;
 import com.thejazz.dailydose.data.TvShowsContract;
 import com.thejazz.dailydose.utilities.UrlUtility;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.util.Vector;
 
 /**
  * Created by TheJazz on 04/08/16.
@@ -42,6 +40,7 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.MyViewHold
     private static ContentValues[] cvArray;
     private static RequestQueue requestQueue;
     private static JsonObjectRequest episodeRequest;
+    private static Cursor mCursor;
 
     public SearchAdapter(Context context) {
         inflater = LayoutInflater.from(context);
@@ -62,7 +61,6 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.MyViewHold
         this.cvArray = new ContentValues[cvArray.length];
         this.cvArray = cvArray;
         notifyDataSetChanged();
-        //notifyItemRangeChanged(0, searchList.size());
     }
 
     @Override
@@ -70,6 +68,9 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.MyViewHold
         ContentValues values = cvArray[position];
         holder.showName.setText(values.get(TvShowsContract.FavsShowEntry.COLUMN_SHOW_NAME).toString());
         String img_url = values.getAsString(TvShowsContract.FavsShowEntry.COLUMN_IMG_URL);
+        boolean isFav = isFavourite(values);
+        if(isFav)
+            holder.imageButton.setImageResource(R.drawable.ic_favorite_white_48dp);
         if (img_url != null) {
             imageLoader.get(img_url, new ImageLoader.ImageListener() {
                 @Override
@@ -83,6 +84,8 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.MyViewHold
                 }
             });
         }
+        else
+            holder.image.setImageResource(R.drawable.ic_info_black_24dp);
     }
 
     @Override
@@ -103,22 +106,31 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.MyViewHold
             imageButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    imageButton.setImageResource(R.drawable.ic_favorite_white_48dp);
-//
                     ContentValues values = cvArray[getAdapterPosition()];
-                    String episodeId = values.get(TvShowsContract.FavsShowEntry.COLUMN_EPISODE_ID).toString();
-                    String airdate = values.get(TvShowsContract.FavsShowEntry.COLUMN_AIR_DATE).toString();
-                    Log.v("EPISODE ID ONCLICK", episodeId + " " + airdate);
-                    if(!episodeId.equals("N/A"))
-                        sendDetailEpisodeRequest(UrlUtility.buildEpisodeUrl(episodeId), values);
-                    else {
-                        values.put(TvShowsContract.FavsShowEntry.COLUMN_EPISODE_NAME, "N/A");
-                        values.put(TvShowsContract.FavsShowEntry.COLUMN_SEASON, "N/A");
-                        values.put(TvShowsContract.FavsShowEntry.COLUMN_EPISODE_NUM, "N/A");
-                        values.put(TvShowsContract.FavsShowEntry.COLUMN_AIR_DATE, "N/A");
-                        values.put(TvShowsContract.FavsShowEntry.COLUMN_AIR_TIME, "N/A");
-                        values.put(TvShowsContract.FavsShowEntry.COLUMN_SUMMARY, "N/A");
-                        updateEpisodes(values);
+                    if(isFavourite(values)){
+                        imageButton.setImageResource(R.drawable.ic_favorite_border_white_48dp);
+                        int rowsDeleted = 0;
+                        rowsDeleted = mContext.getContentResolver().delete(TvShowsContract.FavsShowEntry.CONTENT_URI,
+                                TvShowsContract.FavsShowEntry.COLUMN_SHOW_ID + " = ? ",
+                                new String[]{values.getAsString(TvShowsContract.FavsShowEntry.COLUMN_SHOW_ID)});
+                        if(rowsDeleted == 1)
+                            Toast.makeText(mContext, "Removed " + values.getAsString(TvShowsContract.FavsShowEntry.COLUMN_SHOW_NAME)+" from Favourites.",Toast.LENGTH_LONG).show();
+                    }else {
+                        imageButton.setImageResource(R.drawable.ic_favorite_white_48dp);
+                        String episodeId = values.get(TvShowsContract.FavsShowEntry.COLUMN_EPISODE_ID).toString();
+                        String airdate = values.get(TvShowsContract.FavsShowEntry.COLUMN_AIR_DATE).toString();
+                        Log.v("EPISODE ID ONCLICK", episodeId + " " + airdate);
+                        if (!episodeId.equals("N/A"))
+                            sendDetailEpisodeRequest(UrlUtility.buildEpisodeUrl(episodeId), values);
+                        else {
+                            values.put(TvShowsContract.FavsShowEntry.COLUMN_EPISODE_NAME, "N/A");
+                            values.put(TvShowsContract.FavsShowEntry.COLUMN_SEASON, "N/A");
+                            values.put(TvShowsContract.FavsShowEntry.COLUMN_EPISODE_NUM, "N/A");
+                            values.put(TvShowsContract.FavsShowEntry.COLUMN_AIR_DATE, "N/A");
+                            values.put(TvShowsContract.FavsShowEntry.COLUMN_AIR_TIME, "N/A");
+                            values.put(TvShowsContract.FavsShowEntry.COLUMN_SUMMARY, "N/A");
+                            updateFavourites(values);
+                        }
                     }
                 }
             });
@@ -132,8 +144,8 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.MyViewHold
             @Override
             public void onResponse(JSONObject response) {
                 Log.v("ENTERED DETAIL JSON", "Received response");
-                ContentValues updatedValues = parseShowDetailsResponse(response,values);
-                updateEpisodes(updatedValues);
+                ContentValues updatedValues = parseShowDetailsResponse(response, values);
+                updateFavourites(updatedValues);
             }
         }, new Response.ErrorListener() {
             @Override
@@ -169,7 +181,7 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.MyViewHold
         return values;
     }
 
-    private static void updateEpisodes(ContentValues values){
+    private static void updateFavourites(ContentValues values) {
         Log.v("UPDATE DETAIL", "Updating episode details.");
         String episodeId = values.get(TvShowsContract.FavsShowEntry.COLUMN_EPISODE_ID).toString();
         Uri updated = mContext.getContentResolver().insert(TvShowsContract.FavsShowEntry.CONTENT_URI, values);
@@ -177,5 +189,15 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.MyViewHold
         Toast.makeText(mContext,
                 "Added " + values.get(TvShowsContract.FavsShowEntry.COLUMN_SHOW_NAME).toString() + " to Favourites!",
                 Toast.LENGTH_LONG).show();
+    }
+
+    private static boolean isFavourite(ContentValues values){
+        Uri uri = TvShowsContract.FavsShowEntry.buildShowWithShowId(values.getAsString(TvShowsContract.FavsShowEntry.COLUMN_SHOW_ID));
+        Log.v("URI", "URI : " + uri);
+        mCursor = mContext.getContentResolver().query(uri, null, null, null, null);
+        Log.v("IS FAVOURITE?", "Search "+Integer.toString(mCursor.getCount()) + " " + values.getAsString(TvShowsContract.FavsShowEntry.COLUMN_SHOW_NAME));
+        if (mCursor.getCount() > 0)
+            return true;
+        return false;
     }
 }

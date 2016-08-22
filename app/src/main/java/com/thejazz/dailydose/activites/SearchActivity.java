@@ -21,9 +21,9 @@ import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonArrayRequest;
-import com.android.volley.toolbox.JsonObjectRequest;
+import com.thejazz.dailydose.DividerItemDecoration;
 import com.thejazz.dailydose.R;
-import com.thejazz.dailydose.VolleySingleton;
+import com.thejazz.dailydose.utilities.VolleySingleton;
 import com.thejazz.dailydose.adapters.SearchAdapter;
 import com.thejazz.dailydose.data.TvShowsContract;
 import com.thejazz.dailydose.utilities.UrlUtility;
@@ -44,12 +44,9 @@ public class SearchActivity extends AppCompatActivity {
     private TextView NoResultsTv;
     private RecyclerView recyclerView;
     private JsonArrayRequest arrayRequest;
-    private JsonObjectRequest nextEpisodeRequest;
     private String url;
     private SearchAdapter myAdapter;
     private ContentValues[] cvArray;
-    private ContentValues detailsCv = null;
-    private String tempDate = null;
 
 
     @Override
@@ -63,6 +60,7 @@ public class SearchActivity extends AppCompatActivity {
         requestQueue = VolleySingleton.getInstance().getRequestQueue();
         recyclerView = (RecyclerView) findViewById(R.id.search_rv);
         recyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
+        recyclerView.addItemDecoration(new DividerItemDecoration(this, LinearLayoutManager.VERTICAL));
         myAdapter = new SearchAdapter(getApplicationContext());
         recyclerView.setAdapter(myAdapter);
         searchEt = (EditText) findViewById(R.id.search_et);

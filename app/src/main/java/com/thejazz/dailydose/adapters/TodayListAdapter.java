@@ -3,6 +3,7 @@ package com.thejazz.dailydose.adapters;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -17,7 +18,7 @@ import com.thejazz.dailydose.R;
 import com.thejazz.dailydose.activites.TvDetailActivity;
 import com.thejazz.dailydose.fragments.TodayFragment;
 import com.thejazz.dailydose.utilities.Utility;
-import com.thejazz.dailydose.VolleySingleton;
+import com.thejazz.dailydose.utilities.VolleySingleton;
 
 /**
  * Created by TheJazz on 03/08/16.
@@ -62,8 +63,13 @@ public class TodayListAdapter extends RecyclerView.Adapter<TodayListAdapter.MyVi
         mCursor.moveToPosition(position);
         Log.v("CURSOR DATA "+position, mCursor.getString(1));
         holder.showName.setText(mCursor.getString(TodayFragment.COL_SHOW_NAME));
-        holder.season.setText(mCursor.getString(TodayFragment.COL_SEASON));
-        holder.episode.setText(mCursor.getString(TodayFragment.COL_EPISODE_NUM));
+        holder.season.setText(Utility.formatNumber(mCursor.getString(TodayFragment.COL_SEASON)));
+        if(mCursor.getString(TodayFragment.COL_EPISODE_NUM).equals("")){
+            holder.episodeTitle.setVisibility(View.GONE);
+            holder.episode.setVisibility(View.GONE);
+        }
+        else
+            holder.episode.setText(Utility.formatNumber(mCursor.getString(TodayFragment.COL_EPISODE_NUM)));
         holder.date.setText(Utility.formatAirDate(mCursor.getString(TodayFragment.COL_AIR_DATE)));
         String img_url = mCursor.getString(TodayFragment.COL_IMG_URL);
         if (img_url != null && img_url != ""){
@@ -79,6 +85,8 @@ public class TodayListAdapter extends RecyclerView.Adapter<TodayListAdapter.MyVi
                 }
             });
         }
+        else
+            holder.image.setImageResource(R.drawable.ic_info_black_24dp);
 
     }
 
@@ -89,7 +97,8 @@ public class TodayListAdapter extends RecyclerView.Adapter<TodayListAdapter.MyVi
 
     class MyViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
         ImageView image;
-        TextView showName, season, episode, date;
+        TextView showName, season, episode, date, episodeTitle;
+        CardView cardView;
 
         public MyViewHolder(View itemView) {
             super(itemView);
@@ -98,6 +107,8 @@ public class TodayListAdapter extends RecyclerView.Adapter<TodayListAdapter.MyVi
             season = (TextView) itemView.findViewById(R.id.season_details_tv);
             episode = (TextView) itemView.findViewById(R.id.epi_details_tv);
             date = (TextView) itemView.findViewById(R.id.date_tv);
+            episodeTitle = (TextView) itemView.findViewById(R.id.epi_title_tv);
+            cardView = (CardView) itemView.findViewById(R.id.card_view);
             itemView.setOnClickListener(this);
         }
 

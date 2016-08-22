@@ -42,9 +42,13 @@
             android:name=".data.TvShowProvider"
             android:authorities="com.thejazz.dailydose" />
 
-        <activity android:name=".activites.SearchActivity"
+        <activity
+            android:name=".activites.SearchActivity"
             android:label="Discover"
             android:parentActivityName=".activites.MainActivity" />
+        <activity android:name=".activites.PopularTvDetailActivity" />
+        <service android:name=".services.FetchFavouritesService"/>
     </application>
+
 
 </manifest>

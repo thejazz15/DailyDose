@@ -4,8 +4,10 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.app.NavUtils;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.view.MenuItemCompat;
@@ -15,30 +17,40 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.ImageLoader;
 import com.thejazz.dailydose.R;
-import com.thejazz.dailydose.data.TvShowsContract.TvShowsEntry;
+import com.thejazz.dailydose.utilities.VolleySingleton;
+import com.thejazz.dailydose.data.TvShowsContract.FavsShowEntry;
+import com.thejazz.dailydose.utilities.Utility;
 
-public class TvDetailActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
 
-    public TextView showNametv, epiNametv, airDatetv, seasontv, epiNumtv, networktv, countrytv, imgUrltv;
+public class PopularTvDetailActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
+
+    public TextView showNametv, epiNametv, airDatetv, seasontv, epiNumtv, networktv, countrytv, imgUrltv, summarytv;
+    public ImageView header;
 
     private ShareActionProvider mShareActionProvider;
-    private int episode_ID;
+    private Toolbar toolbar;
+    private CollapsingToolbarLayout collapsingToolbarLayout;
+    private int _ID;
+    private VolleySingleton volleySingleton;
+    private ImageLoader imageLoader;
 
     private static final int DETAIL_LOADER_ID = 0;
 
     private static final String[] TV_SHOW_COLUMNS = {
-            TvShowsEntry._ID,
-            TvShowsEntry.COLUMN_SHOW_NAME,
-            TvShowsEntry.COLUMN_EPISODE_NAME,
-            TvShowsEntry.COLUMN_SEASON,
-            TvShowsEntry.COLUMN_EPISODE_NUM,
-            TvShowsEntry.COLUMN_AIR_DATE,
-            TvShowsEntry.COLUMN_NETWORK,
-            TvShowsEntry.COLUMN_COUNTRY_CODE,
-            TvShowsEntry.COLUMN_IMG_URL
+            FavsShowEntry._ID,
+            FavsShowEntry.COLUMN_SHOW_NAME,
+            FavsShowEntry.COLUMN_EPISODE_NAME,
+            FavsShowEntry.COLUMN_SEASON,
+            FavsShowEntry.COLUMN_EPISODE_NUM,
+            FavsShowEntry.COLUMN_AIR_DATE,
+            FavsShowEntry.COLUMN_IMG_URL,
+            FavsShowEntry.COLUMN_SUMMARY
     };
 
     private static final int COL_ID = 0;
@@ -47,21 +59,23 @@ public class TvDetailActivity extends AppCompatActivity implements LoaderManager
     private static final int COL_SEASON = 3;
     private static final int COL_EPI_NUM = 4;
     private static final int COL_AIR_DATE = 5;
-    private static final int COL_NETWORK = 6;
-    private static final int COL_COUNTRY_CODE = 7;
-    private static final int COL_IMG_URL = 8;
-
+    private static final int COL_IMG_URL = 6;
+    private static final int COL_SUMMARY = 7;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_tv_detail);
+        setContentView(R.layout.popular_tv_detail_layout);
         getSupportLoaderManager().initLoader(DETAIL_LOADER_ID, null, this);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_detail);
+        toolbar = (Toolbar) findViewById(R.id.MyToolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setHomeButtonEnabled(true);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        collapsingToolbarLayout = (CollapsingToolbarLayout) findViewById(R.id.collapse_toolbar);
+        collapsingToolbarLayout.setContentScrimColor(ContextCompat.getColor(this, R.color.colorPrimary));
+        volleySingleton = VolleySingleton.getInstance();
+        imageLoader = volleySingleton.getImageLoader();
     }
 
     public void onResume() {
@@ -97,7 +111,7 @@ public class TvDetailActivity extends AppCompatActivity implements LoaderManager
         if (id == R.id.action_share) {
             return true;
         }
-        if(id == android.R.id.home){
+        if (id == android.R.id.home) {
             NavUtils.navigateUpFromSameTask(this);
         }
 
@@ -107,11 +121,12 @@ public class TvDetailActivity extends AppCompatActivity implements LoaderManager
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         Intent intent = this.getIntent();
-        if (intent != null && intent.hasExtra("column_ID")) {
-            episode_ID = intent.getIntExtra("column_ID", 0);
-            Log.v("EPISODE_ID", Integer.toString(episode_ID));
+
+        if (intent != null && intent.hasExtra("_ID")) {
+            _ID = intent.getIntExtra("_ID", 0);
+            Log.v("_ID", Integer.toString(_ID));
         }
-        Uri episodeUri = TvShowsEntry.buildShowUri(episode_ID);
+        Uri episodeUri = FavsShowEntry.buildShowUri(_ID);
         Log.v("EPISODE_URI", episodeUri.toString());
         return new CursorLoader(getApplicationContext(),
                 episodeUri,
@@ -130,23 +145,39 @@ public class TvDetailActivity extends AppCompatActivity implements LoaderManager
         }
 
         Log.v("CURSOR YES DATA", "data found in cursor");
-        showNametv = (TextView) findViewById(R.id.show_name_tv);
-        epiNametv = (TextView) findViewById(R.id.epi_name_tv);
-        seasontv = (TextView) findViewById(R.id.season_num_tv);
-        epiNumtv = (TextView) findViewById(R.id.epi_num_tv);
-        airDatetv = (TextView) findViewById(R.id.air_date_tv);
-        networktv = (TextView) findViewById(R.id.network_tv);
-        countrytv = (TextView) findViewById(R.id.country_code_tv);
-        imgUrltv = (TextView) findViewById(R.id.img_url_tv);
 
-        showNametv.setText(data.getString(COL_SHOW_NAME));
+        epiNametv = (TextView) findViewById(R.id.episode_name_tv);
+        seasontv = (TextView) findViewById(R.id.season_details_tv);
+        epiNumtv = (TextView) findViewById(R.id.episode_details_tv);
+        airDatetv = (TextView) findViewById(R.id.time_tv);
+        summarytv = (TextView) findViewById(R.id.summary_tv);
+        header = (ImageView) findViewById(R.id.bgheader);
+//        networktv = (TextView) findViewById(R.id.network_tv);
+//        countrytv = (TextView) findViewById(R.id.country_code_tv);
+        collapsingToolbarLayout.setTitle(data.getString(COL_SHOW_NAME));
+        String img_url = data.getString(COL_IMG_URL);
+        if (img_url != null && img_url != ""){
+            imageLoader.get(img_url, new ImageLoader.ImageListener() {
+                @Override
+                public void onResponse(ImageLoader.ImageContainer response, boolean isImmediate) {
+                    header.setImageBitmap(response.getBitmap());
+                }
+
+                @Override
+                public void onErrorResponse(VolleyError error) {
+
+                }
+            });
+        }
+        else
+            header.setImageResource(R.drawable.ic_info_black_24dp);
         epiNametv.setText(data.getString(COL_EPI_NAME));
-        airDatetv.setText(data.getString(COL_AIR_DATE));
+        airDatetv.setText(Utility.formatAirDate(data.getString(COL_AIR_DATE)));
         seasontv.setText(data.getString(COL_SEASON));
         epiNumtv.setText(data.getString(COL_EPI_NUM));
-        networktv.setText(data.getString(COL_NETWORK));
-        countrytv.setText(data.getString(COL_COUNTRY_CODE));
-        imgUrltv.setText(data.getString(COL_IMG_URL));
+        summarytv.setText(data.getString(COL_SUMMARY));
+//        networktv.setText(data.getString(COL_NETWORK));
+//        countrytv.setText(data.getString(COL_COUNTRY_CODE));
         Log.v("TEXTVIEW TEST", data.getString(COL_SHOW_NAME));
 
     }
