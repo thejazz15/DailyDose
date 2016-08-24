@@ -68,7 +68,7 @@ public class TodayFragment extends Fragment implements LoaderManager.LoaderCallb
             TvShowsContract.TvShowsEntry.COLUMN_EPISODE_NUM,
             TvShowsContract.TvShowsEntry.COLUMN_AIR_DATE,
             TvShowsContract.TvShowsEntry.COLUMN_EPISODE_ID,
-            TvShowsContract.TvShowsEntry.COLUMN_IMG_URL
+            TvShowsContract.TvShowsEntry.COLUMN_IMG_URL_MEDIUM
     };
 
     public static final int COL_ID = 0;
@@ -129,7 +129,7 @@ public class TodayFragment extends Fragment implements LoaderManager.LoaderCallb
         //recyclerView.addItemDecoration(new DividerItemDecoration(getActivity(), LinearLayoutManager.VERTICAL));
         myAdapter = new TodayListAdapter(getActivity(), null);
         recyclerView.setAdapter(myAdapter);
-        pBar = (ProgressBar) view.findViewById(R.id.search_progress);
+        pBar = (ProgressBar) view.findViewById(R.id.today_progress);
         noNetTv = (TextView) view.findViewById(R.id.no_internet_tv);
         return view;
     }
@@ -158,6 +158,8 @@ public class TodayFragment extends Fragment implements LoaderManager.LoaderCallb
             @Override
             public void onResponse(JSONArray response) {
                 pBar.setVisibility(View.GONE);
+                if(response.length() == 0)
+                    noNetTv.setVisibility(View.VISIBLE);
                 parseJsonResponse(response);
             }
         }, new Response.ErrorListener() {
@@ -174,7 +176,8 @@ public class TodayFragment extends Fragment implements LoaderManager.LoaderCallb
     }
 
     private void parseJsonResponse(JSONArray array) {
-        String showName, airDate, img_url, episodeNum, season, showID, network, countryCode, episodeName, episodeID;
+        String showName, img_url, img_url_org, episodeNum, season, showID, network, countryCode, episodeName, episodeID;
+        long airDate;
         Vector<ContentValues> vector = new Vector<ContentValues>(array.length());
         if (array.length() == 0 || array == null)
             return;
@@ -183,7 +186,7 @@ public class TodayFragment extends Fragment implements LoaderManager.LoaderCallb
 
                 JSONObject tvShow = array.getJSONObject(i);
                 episodeID = Long.toString(tvShow.getLong("id"));
-                airDate = tvShow.getString("airdate");
+                airDate = Utility.getMillisFromStringDate(tvShow.getString("airdate"));
                 season = Integer.toString(tvShow.getInt("season"));
                 episodeNum = Utility.checkFieldIsNull(tvShow, "number");
                 episodeName = tvShow.getString("name");
@@ -194,7 +197,9 @@ public class TodayFragment extends Fragment implements LoaderManager.LoaderCallb
                 network = networkObj.getString("name");
                 JSONObject countryObj = networkObj.getJSONObject("country");
                 countryCode = countryObj.getString("code");
-                img_url = Utility.checkJSONObjectIsNull(show_info, "image");
+                img_url = Utility.checkJSONObjectIsNull(show_info, "image", "medium");
+                img_url_org = Utility.checkJSONObjectIsNull(show_info, "image", "original");
+                Log.v("BOTH IMG URLS",img_url + "  "+img_url_org);
 
                 ContentValues values = new ContentValues();
                 values.put(TvShowsContract.TvShowsEntry.COLUMN_SHOW_ID, showID);
@@ -206,8 +211,8 @@ public class TodayFragment extends Fragment implements LoaderManager.LoaderCallb
                 values.put(TvShowsContract.TvShowsEntry.COLUMN_EPISODE_NUM, episodeNum);
                 values.put(TvShowsContract.TvShowsEntry.COLUMN_COUNTRY_CODE, countryCode);
                 values.put(TvShowsContract.TvShowsEntry.COLUMN_NETWORK, network);
-                values.put(TvShowsContract.TvShowsEntry.COLUMN_IMG_URL, img_url);
-
+                values.put(TvShowsContract.TvShowsEntry.COLUMN_IMG_URL_MEDIUM, img_url);
+                values.put(TvShowsContract.TvShowsEntry.COLUMN_IMG_URL_ORIGINAL, img_url_org);
                 vector.add(values);
 
             }
@@ -222,17 +227,18 @@ public class TodayFragment extends Fragment implements LoaderManager.LoaderCallb
             vector.toArray(cvArray);
             inserted = getActivity().getContentResolver().bulkInsert(TvShowsContract.TvShowsEntry.CONTENT_URI, cvArray);
             String todayDate = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
-            getActivity().getContentResolver().delete(TvShowsContract.TvShowsEntry.CONTENT_URI,
-                    TvShowsContract.TvShowsEntry.COLUMN_AIR_DATE + " < ? ",
-                    new String[]{todayDate});
+            long millisToday = Utility.getMillisFromStringDate(todayDate);
+//            getActivity().getContentResolver().delete(TvShowsContract.TvShowsEntry.CONTENT_URI,
+//                    TvShowsContract.TvShowsEntry.COLUMN_AIR_DATE + " < ? ",
+//                    new String[]{todayDate});
         }
     }
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
+        long millisToday = Utility.getMillisFromStringDate(new SimpleDateFormat("yyyy-MM-dd").format(new Date()));
 
-        Uri tvShowsUri = TvShowsContract.TvShowsEntry.buildShowsWithCountryAndDate(Utility.getPrefferedCountry(getActivity()), date);
+        Uri tvShowsUri = TvShowsContract.TvShowsEntry.buildShowsWithCountryAndDate(Utility.getPrefferedCountry(getActivity()), millisToday);
         Log.v("MainActivity", tvShowsUri.toString());
         return new CursorLoader(getActivity(),
                 tvShowsUri,

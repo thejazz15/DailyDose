@@ -5,7 +5,7 @@
     xmlns:card_view="http://schemas.android.com/apk/res-auto"
     android:id="@+id/card_view"
     android:layout_width="match_parent"
-    android:layout_height="?android:attr/listPreferredItemHeight"
+    android:layout_height="wrap_content"
     card_view:cardCornerRadius="4dp"
     android:layout_marginTop="4dp"
     android:clickable="true"
@@ -27,8 +27,6 @@
             android:layout_weight="1"
             android:gravity="center|center_vertical"
             android:minHeight="?android:attr/listPreferredItemHeight"
-            android:paddingBottom="6dp"
-            android:paddingTop="6dp"
             android:layout_marginLeft="4dp"
             android:src="@drawable/ic_info_black_24dp" />
 
@@ -42,7 +40,7 @@
                 android:id="@+id/show_name_tv"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="18sp" />
+                android:textSize="20sp" />
 
             <TextView
                 android:id="@+id/season_title_tv"
@@ -51,7 +49,7 @@
                 android:layout_below="@id/show_name_tv"
                 android:paddingTop="4dp"
                 android:text="S"
-                android:textSize="12sp"
+                android:textSize="13sp"
                 android:visibility="gone" />
 
             <TextView
@@ -61,7 +59,7 @@
                 android:layout_below="@id/show_name_tv"
                 android:layout_toEndOf="@id/season_title_tv"
                 android:paddingTop="4dp"
-                android:textSize="12sp"
+                android:textSize="13sp"
                 android:visibility="gone"
 
                 />
@@ -74,7 +72,7 @@
                 android:layout_toEndOf="@id/season_details_tv"
                 android:paddingTop="4dp"
                 android:text="E"
-                android:textSize="12sp"
+                android:textSize="13sp"
                 android:visibility="gone" />
 
             <TextView
@@ -84,7 +82,7 @@
                 android:layout_below="@id/show_name_tv"
                 android:layout_toEndOf="@id/epi_title_tv"
                 android:paddingTop="4dp"
-                android:textSize="12sp"
+                android:textSize="13sp"
                 android:visibility="gone" />
 
             <TextView
@@ -95,7 +93,7 @@
                 android:layout_toEndOf="@id/epi_details_tv"
                 android:paddingTop="4dp"
                 android:text=" - "
-                android:textSize="12sp"
+                android:textSize="13sp"
                 android:visibility="gone" />
 
             <TextView
@@ -105,26 +103,36 @@
                 android:layout_below="@id/show_name_tv"
                 android:layout_toEndOf="@id/dash"
                 android:paddingTop="4dp"
-                android:textSize="12sp"
+                android:textSize="13sp"
                 android:visibility="gone" />
+            <!--<TextView-->
+                <!--android:id="@+id/airs_in_tv"-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:layout_below="@id/season_title_tv"-->
+                <!--android:paddingTop="4dp"-->
+                <!--android:paddingEnd="4dp"-->
+                <!--android:textSize="14sp"-->
+                <!--android:visibility="gone" />-->
+            <TextView
+                android:id="@+id/date_tv"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingStart="6dp"
+                android:paddingEnd="6dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp"
+                android:layout_marginTop="4dp"
+                android:layout_below="@id/season_title_tv"
+                android:textColor="@color/colorAirDate"
+                android:background="@drawable/background_air_date"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:visibility="gone"/>
 
         </RelativeLayout>
 
-        <TextView
-            android:id="@+id/date_tv"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginEnd="4dp"
-            android:layout_weight="2"
-            android:background="@drawable/background_air_date"
-            android:gravity="center"
-            android:paddingBottom="4dp"
-            android:paddingEnd="8dp"
-            android:paddingStart="8dp"
-            android:paddingTop="4dp"
-            android:textColor="@color/colorAirDate"
-            android:textSize="12sp" />
+
 
     </LinearLayout>
 </android.support.v7.widget.CardView>

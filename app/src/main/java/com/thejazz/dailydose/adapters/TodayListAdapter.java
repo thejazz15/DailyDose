@@ -70,9 +70,8 @@ public class TodayListAdapter extends RecyclerView.Adapter<TodayListAdapter.MyVi
         }
         else
             holder.episode.setText(Utility.formatNumber(mCursor.getString(TodayFragment.COL_EPISODE_NUM)));
-        holder.date.setText(Utility.formatAirDate(mCursor.getString(TodayFragment.COL_AIR_DATE)));
         String img_url = mCursor.getString(TodayFragment.COL_IMG_URL);
-        if (img_url != null && img_url != ""){
+        if (img_url != null && !img_url.equals("")){
             imageLoader.get(img_url, new ImageLoader.ImageListener() {
                 @Override
                 public void onResponse(ImageLoader.ImageContainer response, boolean isImmediate) {
@@ -87,7 +86,6 @@ public class TodayListAdapter extends RecyclerView.Adapter<TodayListAdapter.MyVi
         }
         else
             holder.image.setImageResource(R.drawable.ic_info_black_24dp);
-
     }
 
     @Override
@@ -97,7 +95,7 @@ public class TodayListAdapter extends RecyclerView.Adapter<TodayListAdapter.MyVi
 
     class MyViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
         ImageView image;
-        TextView showName, season, episode, date, episodeTitle;
+        TextView showName, season, episode, episodeTitle;
         CardView cardView;
 
         public MyViewHolder(View itemView) {
@@ -106,7 +104,6 @@ public class TodayListAdapter extends RecyclerView.Adapter<TodayListAdapter.MyVi
             showName = (TextView) itemView.findViewById(R.id.show_name_tv);
             season = (TextView) itemView.findViewById(R.id.season_details_tv);
             episode = (TextView) itemView.findViewById(R.id.epi_details_tv);
-            date = (TextView) itemView.findViewById(R.id.date_tv);
             episodeTitle = (TextView) itemView.findViewById(R.id.epi_title_tv);
             cardView = (CardView) itemView.findViewById(R.id.card_view);
             itemView.setOnClickListener(this);

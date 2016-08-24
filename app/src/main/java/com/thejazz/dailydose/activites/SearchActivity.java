@@ -61,7 +61,7 @@ public class SearchActivity extends AppCompatActivity {
         recyclerView = (RecyclerView) findViewById(R.id.search_rv);
         recyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
         recyclerView.addItemDecoration(new DividerItemDecoration(this, LinearLayoutManager.VERTICAL));
-        myAdapter = new SearchAdapter(getApplicationContext());
+        myAdapter = new SearchAdapter(this);
         recyclerView.setAdapter(myAdapter);
         searchEt = (EditText) findViewById(R.id.search_et);
         searchBtn = (Button) findViewById(R.id.search_btn);
@@ -104,7 +104,7 @@ public class SearchActivity extends AppCompatActivity {
     private ContentValues[] parseJsonResponse(JSONArray array) {
         ContentValues[] cvArray = new ContentValues[array.length()];
         Vector<ContentValues> vector = new Vector<ContentValues>(array.length());
-        String showName, imgUrl, id;
+        String showName, imgUrl, imgUrlOrg, id;
 
         if (array.length() > 0 && array != null) {
             try {
@@ -112,27 +112,31 @@ public class SearchActivity extends AppCompatActivity {
                     JSONObject mainObject = array.getJSONObject(i);
                     JSONObject showInfo = mainObject.getJSONObject("show");
                     showName = showInfo.getString("name");
+                    Log.v("SearchActivity", showName);
                     id = Integer.toString(showInfo.getInt("id"));
-                    imgUrl = Utility.checkJSONObjectIsNull(showInfo, "image");
+                    imgUrl = Utility.checkJSONObjectIsNull(showInfo, "image", "medium");
+                    imgUrlOrg = Utility.checkJSONObjectIsNull(showInfo, "image", "original");
+                    String showSummary = showInfo.getString("summary");
                     JSONObject linksObject = showInfo.getJSONObject("_links");
                     String nextEpisodeUrl = Utility.checkIfShowHasNextEpisode(linksObject, "nextepisode");
-                    Log.v("NEXT EPISODE", nextEpisodeUrl + " " + showName);
+                    JSONObject external_links = showInfo.getJSONObject("externals");
+                    String imdbId = external_links.getString("imdb");
 
                     ContentValues values = new ContentValues();
-
                     values.put(TvShowsContract.FavsShowEntry.COLUMN_SHOW_ID, id);
                     values.put(TvShowsContract.FavsShowEntry.COLUMN_SHOW_NAME, showName);
-                    values.put(TvShowsContract.FavsShowEntry.COLUMN_IMG_URL, imgUrl);
-                    values.put(TvShowsContract.FavsShowEntry.COLUMN_AIR_DATE, "N/A");
+                    values.put(TvShowsContract.FavsShowEntry.COLUMN_IMG_URL_MEDIUM, imgUrl);
+                    values.put(TvShowsContract.FavsShowEntry.COLUMN_IMG_URL_ORIGINAL, imgUrlOrg);
+                    values.put(TvShowsContract.FavsShowEntry.COLUMN_SHOW_SUMMARY, showSummary);
+                    values.put(TvShowsContract.FavsShowEntry.COLUMN_IMDB_ID, imdbId);
 
-                    if(nextEpisodeUrl.equals("N/A")) {
+                    if (nextEpisodeUrl.equals("N/A"))
                         values.put(TvShowsContract.FavsShowEntry.COLUMN_EPISODE_ID, "N/A");
-                        Log.v("NEXT AIRDATE IN SEARCH", "No url found");
-                    }else{
+                    else{
                         String parts[] = nextEpisodeUrl.split("/episodes/");
-                        Log.v("NEXT AIRDATE IN SEARCH", "Url found with episode id "+ parts[1]);
                         values.put(TvShowsContract.FavsShowEntry.COLUMN_EPISODE_ID, parts[1]);
-                  }
+                    }
+
                     vector.add(values);
                 }
                 cvArray = new ContentValues[vector.size()];

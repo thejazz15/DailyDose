@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -24,6 +25,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.thejazz.dailydose.DividerItemDecoration;
 import com.thejazz.dailydose.R;
+import com.thejazz.dailydose.activites.MainActivity;
 import com.thejazz.dailydose.utilities.VolleySingleton;
 import com.thejazz.dailydose.activites.SettingsActivity;
 import com.thejazz.dailydose.adapters.PopularAdapter;
@@ -84,8 +86,8 @@ public class PopularFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view =  inflater.inflate(R.layout.popular_layout, container, false);
         recyclerView = (RecyclerView) view.findViewById(R.id.pop_rv);
-        recyclerView.setLayoutManager( new LinearLayoutManager(getActivity()));
-        recyclerView.addItemDecoration(new DividerItemDecoration(getActivity(), LinearLayoutManager.VERTICAL));
+        recyclerView.setHasFixedSize(true);
+        recyclerView.setLayoutManager(new GridLayoutManager(getActivity(), 3));
         myAdapter = new PopularAdapter(getActivity());
         recyclerView.setAdapter(myAdapter);
         pBar = (ProgressBar) view.findViewById(R.id.popular_progress);

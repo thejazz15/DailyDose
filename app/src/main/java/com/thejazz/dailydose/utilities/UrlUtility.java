@@ -21,6 +21,7 @@ public class UrlUtility {
     final static String API_KEY_PARAM = "api_key";
     final static String API_KEY = "370bd9adf388af99c0fb4fd03ffc5f2c";
     final static String IMAGE_URI = "http://image.tmdb.org/t/p/w500";
+    final static String IMDB_BASE_URI = "http://www.imdb.com/title/";
 
     public static String buildTodayUrl(String country){
         Uri uri = Uri.parse(SCHEDULE_URI).buildUpon()
@@ -53,6 +54,11 @@ public class UrlUtility {
     public static String buildSingleSearchUrl(String query){
         Uri uri = Uri.parse(SINGLE_SEARCH_URI).buildUpon()
                 .appendQueryParameter(QUERY_PARAM, query).build();
+        return uri.toString();
+    }
+
+    public static String buildIMDBUrl(String id){
+        Uri uri = Uri.parse(IMDB_BASE_URI).buildUpon().appendPath(id).build();
         return uri.toString();
     }
 }

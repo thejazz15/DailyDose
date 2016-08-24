@@ -1,6 +1,5 @@
 package com.thejazz.dailydose.fragments;
 
-import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -17,17 +16,21 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.thejazz.dailydose.R;
 import com.thejazz.dailydose.adapters.FavouritesAdapter;
 import com.thejazz.dailydose.data.TvShowsContract;
-import com.thejazz.dailydose.services.FetchFavouritesService;
+import com.thejazz.dailydose.sync.MySyncAdapter;
 
 public class FavouritesFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
 
     private RecyclerView recyclerView;
     private FavouritesAdapter favouritesAdapter;
+    private ProgressBar pBar;
+    public TextView noFavsTv;
 
 
     private static final int TV_FAVS_LOADER_ID = 0;
@@ -35,7 +38,7 @@ public class FavouritesFragment extends Fragment implements LoaderManager.Loader
     private static final String[] TV_SHOW_COLUMNS = {
             TvShowsContract.FavsShowEntry.TABLE_NAME + "." + TvShowsContract.FavsShowEntry._ID,
             TvShowsContract.FavsShowEntry.COLUMN_SHOW_NAME,
-            TvShowsContract.FavsShowEntry.COLUMN_IMG_URL,
+            TvShowsContract.FavsShowEntry.COLUMN_IMG_URL_MEDIUM,
             TvShowsContract.FavsShowEntry.COLUMN_AIR_DATE,
             TvShowsContract.FavsShowEntry.COLUMN_EPISODE_NAME,
             TvShowsContract.FavsShowEntry.COLUMN_SEASON,
@@ -61,7 +64,6 @@ public class FavouritesFragment extends Fragment implements LoaderManager.Loader
     @Override
     public void onStart() {
         super.onStart();
-//        syncFavourites();
     }
 
     @Override
@@ -80,17 +82,18 @@ public class FavouritesFragment extends Fragment implements LoaderManager.Loader
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if(id == R.id.action_sync){
-            Toast.makeText(getActivity(), "Sync button clicked", Toast.LENGTH_SHORT).show();
+            pBar.setVisibility(View.VISIBLE);
+            Toast.makeText(getActivity(), "Syncing..", Toast.LENGTH_SHORT).show();
             syncFavourites();
             getLoaderManager().restartLoader(TV_FAVS_LOADER_ID, null ,this);
+            pBar.setVisibility(View.GONE);
             return true;
         }
         return super.onOptionsItemSelected(item);
     }
 
     private void syncFavourites(){
-        Intent intent = new Intent(getActivity(), FetchFavouritesService.class);
-        getActivity().startService(intent);
+        MySyncAdapter.syncImmediately(getActivity());
     }
 
     @Override
@@ -107,6 +110,7 @@ public class FavouritesFragment extends Fragment implements LoaderManager.Loader
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         //recyclerView.addItemDecoration(new DividerItemDecoration(getActivity(), LinearLayoutManager.VERTICAL));
         favouritesAdapter = new FavouritesAdapter(getActivity(), null);
+        pBar = (ProgressBar) view.findViewById(R.id.favs_progress);
         recyclerView.setAdapter(favouritesAdapter);
         return view;
     }

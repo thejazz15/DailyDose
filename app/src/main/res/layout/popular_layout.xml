@@ -18,12 +18,14 @@
         android:gravity="center"/>
 
     <ProgressBar
-        android:layout_margin="8dp"
         android:id="@+id/popular_progress"
+        android:theme="@style/CircularProgress"
+        style="@style/Widget.AppCompat.ProgressBar"
         android:layout_width="match_parent"
-        style="@style/GenericProgressIndicator"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
         android:foregroundGravity="center"
-        android:visibility="visible"/>
+        android:visibility="visible" />
 
     <TextView
         android:id="@+id/no_internet_tv"

@@ -3,6 +3,9 @@
     package="com.thejazz.dailydose">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.READ_SYNC_SETTINGS" />
+    <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
+    <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS" />
 
     <application
         android:name=".utilities.MyApplication"
@@ -13,7 +16,9 @@
         android:theme="@style/AppTheme">
         <activity
             android:name=".activites.MainActivity"
+            android:configChanges="orientation"
             android:label="@string/app_name"
+            android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -23,16 +28,20 @@
         </activity>
         <activity
             android:name=".activites.TvDetailActivity"
+            android:configChanges="orientation"
             android:label="@string/title_activity_tv_detail"
-            android:parentActivityName=".activites.MainActivity">
+            android:parentActivityName=".activites.MainActivity"
+            android:screenOrientation="portrait">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".activites.MainActivity" />
         </activity>
         <activity
             android:name=".activites.SettingsActivity"
+            android:configChanges="orientation"
             android:label="@string/title_activity_settings"
-            android:parentActivityName=".activites.MainActivity">
+            android:parentActivityName=".activites.MainActivity"
+            android:screenOrientation="portrait">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".activites.MainActivity" />
@@ -40,15 +49,52 @@
 
         <provider
             android:name=".data.TvShowProvider"
-            android:authorities="com.thejazz.dailydose" />
+            android:authorities="com.thejazz.dailydose"
+            android:exported="false"
+            android:syncable="true" />
 
         <activity
             android:name=".activites.SearchActivity"
+            android:configChanges="orientation"
             android:label="Discover"
-            android:parentActivityName=".activites.MainActivity" />
-        <activity android:name=".activites.PopularTvDetailActivity" />
-        <service android:name=".services.FetchFavouritesService"/>
-    </application>
+            android:parentActivityName=".activites.MainActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".activites.FavouritesTvDetailActivity"
+            android:configChanges="orientation"
+            android:screenOrientation="portrait" />
 
+        <service android:name=".services.FetchFavouritesService" />
+        <service android:name=".sync.DailyDoseAuthenticatorService">
+            <intent-filter>
+                <action android:name="android.accounts.AccountAuthenticator" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.accounts.AccountAuthenticator"
+                android:resource="@xml/authenticator" />
+        </service>
+        <service
+            android:name=".sync.MySyncService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.content.SyncAdapter" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.content.SyncAdapter"
+                android:resource="@xml/syncadapter" />
+        </service>
+
+        <activity
+            android:name=".activites.IMDbActivity"
+            android:configChanges="orientation"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".activites.PopularDetailActivity"
+            android:configChanges="orientation"
+            android:screenOrientation="portrait" />
+        <activity android:name=".activites.SearchDetailActivity"></activity>
+    </application>
 
 </manifest>

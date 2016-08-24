@@ -21,6 +21,7 @@ import com.thejazz.dailydose.R;
 import com.thejazz.dailydose.fragments.FavouritesFragment;
 import com.thejazz.dailydose.fragments.TodayFragment;
 import com.thejazz.dailydose.fragments.PopularFragment;
+import com.thejazz.dailydose.sync.MySyncAdapter;
 import com.thejazz.dailydose.tabs.SlidingTabLayout;
 import com.thejazz.dailydose.utilities.TypefaceUtil;
 import com.thejazz.dailydose.utilities.Utility;
@@ -28,13 +29,11 @@ import com.thejazz.dailydose.utilities.Utility;
 public class MainActivity extends AppCompatActivity {
 
     String country;
-    private final String TVSHOWSFRAGMENT_TAG = "TVTAG";
     private ViewPager mPager;
     private SlidingTabLayout mTabs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        //TypefaceUtil.overrideFont(getApplicationContext(), "RALEWAY", "fonts/Raleway-Regular.ttf");
         country = Utility.getPrefferedCountry(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
@@ -53,15 +52,9 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 startActivity(new Intent(getApplicationContext(), SearchActivity.class));
-//                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-//                        .setAction("Action", null).show();
             }
         });
-//        if (savedInstanceState == null) {
-//            getSupportFragmentManager().beginTransaction()
-//                    .add(R.id.container, new TvShowsFragment(), "TvShowsFragment")
-//                    .commit();
-//        }
+        MySyncAdapter.initializeSyncAdapter(this);
     }
 
     @Override

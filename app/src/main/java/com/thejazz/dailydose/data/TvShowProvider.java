@@ -12,6 +12,11 @@ import android.util.Log;
 
 import com.thejazz.dailydose.data.TvShowsContract.TvShowsEntry;
 import com.thejazz.dailydose.data.TvShowsContract.FavsShowEntry;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 /**
  * Created by TheJazz on 20/07/16.
  */
@@ -24,6 +29,7 @@ public class TvShowProvider extends ContentProvider {
     public static final int SHOWS_ID = 106;
     public static final int FAVS = 107;
     public static final int FAVS_ID = 108;
+    public static final int FAV_WITH_TODAY_DATE = 109;
 
     public static final UriMatcher sUriMatcher = buildUriMatcher();
     private TvShowDbHelper myHelper;
@@ -37,8 +43,8 @@ public class TvShowProvider extends ContentProvider {
         matcher.addURI(authority, TvShowsContract.PATH_SHOWS + "/*",SHOWS_ID);
         matcher.addURI(authority, TvShowsContract.FAV_SHOWS, FAVS);
         matcher.addURI(authority, TvShowsContract.FAV_SHOWS + "/show/*",SHOWS_WITH_SHOW_ID);
+        matcher.addURI(authority, TvShowsContract.FAV_SHOWS + "/today/favs/*", FAV_WITH_TODAY_DATE);
         matcher.addURI(authority, TvShowsContract.FAV_SHOWS + "/*",FAVS_ID);
-
         return matcher;
     }
 
@@ -75,6 +81,24 @@ public class TvShowProvider extends ContentProvider {
                         projection,
                         FavsShowEntry.COLUMN_SHOW_ID + " = ? ",
                         new String[]{show_id},
+                        null,
+                        null,
+                        sortOrder);
+                break;
+            case FAV_WITH_TODAY_DATE:
+                String todayString = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
+                Date todayDate = null;
+                try {
+                    todayDate = new SimpleDateFormat("yyyy-MM-dd").parse(todayString);
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+                long millisToday = todayDate.getTime();
+                long millisTomorrow = millisToday + (1000 * 60 * 60 * 24);
+                retCursor = db.query(FavsShowEntry.TABLE_NAME,
+                        projection,
+                        FavsShowEntry.COLUMN_AIR_DATE + " >= ? AND " + FavsShowEntry.COLUMN_AIR_DATE + " < ? ",
+                        new String[]{Long.toString(millisToday),Long.toString(millisTomorrow)},
                         null,
                         null,
                         sortOrder);

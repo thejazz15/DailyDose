@@ -24,7 +24,7 @@
             android:textSize="16sp" />
 
         <ProgressBar
-            android:id="@+id/search_progress"
+            android:id="@+id/today_progress"
             android:theme="@style/CircularProgress"
             style="@style/Widget.AppCompat.ProgressBar"
             android:layout_width="match_parent"
@@ -39,7 +39,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="4dp"
             android:gravity="center"
-            android:text="No Shows today."
+            android:text="No results found. :("
             android:visibility="gone" />
 
 

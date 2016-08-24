@@ -1,7 +1,10 @@
 package com.thejazz.dailydose.utilities;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
@@ -13,6 +16,7 @@ import com.android.volley.ServerError;
 import com.android.volley.TimeoutError;
 import com.android.volley.VolleyError;
 import com.thejazz.dailydose.R;
+import com.thejazz.dailydose.data.TvShowsContract;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -41,7 +45,7 @@ public class Utility {
         return retString;
     }
 
-    public static String checkJSONObjectIsNull(JSONObject obj, String stringObj) {
+    public static String checkJSONObjectIsNull(JSONObject obj, String stringObj, String field) {
         JSONObject newObj = null;
         String retString = null;
         try {
@@ -53,7 +57,7 @@ public class Utility {
             retString = "";
         else {
             try {
-                retString = newObj.getString("medium");
+                retString = newObj.getString(field);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -84,14 +88,29 @@ public class Utility {
                 context.getString(R.string.pref_default_country));
     }
 
+    public static String formatAirsInText(String date) {
+        if (date.equals("Today") || date.equals("Tomorrow") || date.startsWith("In"))
+            return "Airs";
+        else if (date.equals("Yesterday") || date.contains("back"))
+            return "Aired";
+        else
+            return "";
+    }
+
+    public static String getDateFromMillis(long millis) {
+        if (millis == Long.MAX_VALUE)
+            return "TBA";
+        Date date = new Date();
+        date.setTime(millis);
+        String formatDate = new SimpleDateFormat("yyyy-MM-dd").format(date);
+        return formatAirDate(formatDate);
+    }
+
     public static String formatAirDate(String date) {
-        Log.v("DATE FORMAT", "Formatting data.");
-        if (date.equals("N/A"))
-            return "N/A";
         String todayDate = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
         String retDate = null;
         if (todayDate.equals(date))
-            retDate = "Today";
+            retDate = "Airs Today";
         else {
             SimpleDateFormat myFormat = new SimpleDateFormat("yyyy-MM-dd");
             try {
@@ -100,13 +119,15 @@ public class Utility {
                 long diff = date2.getTime() - date1.getTime();
                 long numDays = TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS);
                 if (numDays == 1)
-                    retDate = "Tomorrow";
+                    retDate = "Airs Tomorrow";
                 else if (numDays == -1)
-                    retDate = "Yesterday";
+                    retDate = "Aired Yesterday";
                 else if (numDays < -1)
-                    retDate = (numDays * -1) + " Days back";
+                    retDate = "N/A";
+                else if (numDays < -1)
+                    retDate = "Aired " + (numDays * -1) + " Days back";
                 else
-                    retDate = "In " + numDays + " Days";
+                    retDate = "Airs " + "In " + numDays + " Days";
             } catch (ParseException e) {
                 Log.e("DATE ERROR", "Error formmating date");
                 e.printStackTrace();
@@ -127,18 +148,64 @@ public class Utility {
         }
     }
 
-    public static String VolleyErrorMessage(VolleyError error){
+    public static String VolleyErrorMessage(VolleyError error) {
         String message = null;
-        if(error instanceof TimeoutError || error instanceof NoConnectionError)
+        if (error instanceof TimeoutError || error instanceof NoConnectionError)
             message = "Network Timeout!";
-        else if(error instanceof AuthFailureError)
+        else if (error instanceof AuthFailureError)
             message = "Authentication Failed.";
-        else if(error instanceof ServerError)
+        else if (error instanceof ServerError)
             message = "Server Request Failed.";
-        else if(error instanceof NetworkError)
+        else if (error instanceof NetworkError)
             message = "No network connectivity.";
-        else if(error instanceof ParseError)
+        else if (error instanceof ParseError)
             message = "Could not parse data.";
         return message;
     }
+
+    public static long getMillisFromStringDate(String date) {
+        long millis = 0;
+        Date dt;
+        try {
+            dt = new SimpleDateFormat("yyyy-MM-dd").parse(date);
+            millis = dt.getTime();
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return millis;
+    }
+
+    public static String formatSummary(String summary) {
+        String retSummary = summary.replaceAll("<p>", "");
+        retSummary = retSummary.replaceAll("</p>", "");
+        retSummary = retSummary.replaceAll(";", ",");
+        retSummary = retSummary.replaceAll("<em>", "");
+        retSummary = retSummary.replaceAll("</em>", "");
+        retSummary = retSummary.replaceAll("<strong>", "");
+        retSummary = retSummary.replaceAll("</strong>", "");
+        retSummary = retSummary.replaceAll("/", "");
+        retSummary = retSummary.replaceAll("<span>","");
+        retSummary = retSummary.replaceAll("</span>","");
+        return retSummary;
+    }
+
+    public static boolean isFavourite(ContentValues values) {
+        Uri uri = TvShowsContract.FavsShowEntry.buildShowWithShowId(values.getAsString(TvShowsContract.FavsShowEntry.COLUMN_SHOW_ID));
+        Log.v("URI", "URI : " + uri);
+        Cursor mCursor = MyApplication.getAppContext().getContentResolver().query(uri, null, null, null, null);
+        Log.v("IS FAVOURITE?", "Search " + Integer.toString(mCursor.getCount()) + " " + values.getAsString(TvShowsContract.FavsShowEntry.COLUMN_SHOW_NAME));
+        if (mCursor.getCount() > 0)
+            return true;
+        return false;
+    }
+
+    public static boolean isFavourite(String showId) {
+        Uri uri = TvShowsContract.FavsShowEntry.buildShowWithShowId(showId);
+        Log.v("URI", "URI : " + uri);
+        Cursor mCursor = MyApplication.getAppContext().getContentResolver().query(uri, null, null, null, null);
+        if (mCursor.getCount() > 0)
+            return true;
+        return false;
+    }
+
 }

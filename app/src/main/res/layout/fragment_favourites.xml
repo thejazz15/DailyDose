@@ -16,6 +16,24 @@
         android:textSize="16sp"
         android:layout_marginBottom="8dp"
         android:gravity="center"/>
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/add_favs_tv"
+        android:textSize="14sp"
+        android:layout_marginBottom="8dp"
+        android:gravity="center"
+        android:visibility="gone"/>
+
+    <ProgressBar
+        android:id="@+id/favs_progress"
+        android:theme="@style/CircularProgress"
+        style="@style/Widget.AppCompat.ProgressBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        android:foregroundGravity="center"
+        android:visibility="gone" />
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/fav_rv"

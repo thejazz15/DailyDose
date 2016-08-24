@@ -31,7 +31,8 @@ public class TvShowsContract {
         public static final String COLUMN_EPISODE_NAME = "episode_name";
         public static final String COLUMN_COUNTRY_CODE = "country_code";
         public static final String COLUMN_NETWORK = "network_name";
-        public static final String COLUMN_IMG_URL = "img_url";
+        public static final String COLUMN_IMG_URL_MEDIUM = "img_url_medium";
+        public static final String COLUMN_IMG_URL_ORIGINAL = "img_url_original";
 
         public static Uri buildShowUri(long id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);
@@ -45,8 +46,8 @@ public class TvShowsContract {
 //            return CONTENT_URI.buildUpon().appendPath(country_code).build();
 //        }
 
-        public static Uri buildShowsWithCountryAndDate(String country_code, String date) {
-            return CONTENT_URI.buildUpon().appendPath(country_code).appendPath(date).build();
+        public static Uri buildShowsWithCountryAndDate(String country_code, long date) {
+            return CONTENT_URI.buildUpon().appendPath(country_code).appendPath(Long.toString(date)).build();
         }
 
 //        public static Uri buildShowWithEpisodeId(String episodeId) {
@@ -88,10 +89,17 @@ public class TvShowsContract {
         public static final String COLUMN_EPISODE_NUM = "episode_num";
         public static final String COLUMN_EPISODE_ID = "episode_id";
         public static final String COLUMN_SUMMARY = "summary";
-        public static final String COLUMN_IMG_URL = "img_url";
+        public static final String COLUMN_SHOW_SUMMARY = "show_summary";
+        public static final String COLUMN_IMG_URL_MEDIUM = "img_url_medium";
+        public static final String COLUMN_IMG_URL_ORIGINAL = "img_url_original";
+        public static final String COLUMN_IMDB_ID = "imdb_id";
 
         public static Uri buildShowUri(long id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);
+        }
+
+        public static Uri buildShowUriWithTodayDate(){
+            return CONTENT_URI.buildUpon().appendPath("today").appendPath("favs").appendPath("shows").build();
         }
 
         public static Uri buildShowWithShowId(String show_id) {

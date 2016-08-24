@@ -2,6 +2,7 @@ package com.thejazz.dailydose.adapters;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.support.v7.widget.RecyclerView;
@@ -20,7 +21,10 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageLoader;
 import com.android.volley.toolbox.JsonObjectRequest;
+import com.facebook.stetho.common.Util;
 import com.thejazz.dailydose.R;
+import com.thejazz.dailydose.activites.SearchDetailActivity;
+import com.thejazz.dailydose.utilities.Utility;
 import com.thejazz.dailydose.utilities.VolleySingleton;
 import com.thejazz.dailydose.data.TvShowsContract;
 import com.thejazz.dailydose.utilities.UrlUtility;
@@ -34,13 +38,12 @@ import org.json.JSONObject;
 public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.MyViewHolder> {
 
     private LayoutInflater inflater;
-    private static Context mContext;
+    private Context mContext;
     private VolleySingleton volleySingleton;
     private ImageLoader imageLoader;
-    private static ContentValues[] cvArray;
-    private static RequestQueue requestQueue;
-    private static JsonObjectRequest episodeRequest;
-    private static Cursor mCursor;
+    private ContentValues[] cvArray;
+    private RequestQueue requestQueue;
+    private JsonObjectRequest episodeRequest;
 
     public SearchAdapter(Context context) {
         inflater = LayoutInflater.from(context);
@@ -65,13 +68,13 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.MyViewHold
 
     @Override
     public void onBindViewHolder(final SearchAdapter.MyViewHolder holder, int position) {
-        ContentValues values = cvArray[position];
+        final ContentValues values = cvArray[position];
         holder.showName.setText(values.get(TvShowsContract.FavsShowEntry.COLUMN_SHOW_NAME).toString());
-        String img_url = values.getAsString(TvShowsContract.FavsShowEntry.COLUMN_IMG_URL);
-        boolean isFav = isFavourite(values);
+        String img_url = values.getAsString(TvShowsContract.FavsShowEntry.COLUMN_IMG_URL_MEDIUM);
+        boolean isFav = Utility.isFavourite(values.getAsString(TvShowsContract.FavsShowEntry.COLUMN_SHOW_ID));
         if(isFav)
             holder.imageButton.setImageResource(R.drawable.ic_favorite_white_48dp);
-        if (img_url != null) {
+        if (img_url != null && !img_url.equals("")) {
             imageLoader.get(img_url, new ImageLoader.ImageListener() {
                 @Override
                 public void onResponse(ImageLoader.ImageContainer response, boolean isImmediate) {
@@ -86,6 +89,14 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.MyViewHold
         }
         else
             holder.image.setImageResource(R.drawable.ic_info_black_24dp);
+        holder.itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(mContext.getApplicationContext(), SearchDetailActivity.class)
+                        .putExtra("showName",values.getAsString(TvShowsContract.FavsShowEntry.COLUMN_SHOW_NAME));
+                mContext.startActivity(intent);
+            }
+        });
     }
 
     @Override
@@ -93,7 +104,7 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.MyViewHold
         return (cvArray == null) ? 0 : cvArray.length;
     }
 
-    static class MyViewHolder extends RecyclerView.ViewHolder {
+    class MyViewHolder extends RecyclerView.ViewHolder {
         ImageView image;
         TextView showName;
         ImageButton imageButton;
@@ -107,7 +118,7 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.MyViewHold
                 @Override
                 public void onClick(View view) {
                     ContentValues values = cvArray[getAdapterPosition()];
-                    if(isFavourite(values)){
+                    if(Utility.isFavourite(values)){
                         imageButton.setImageResource(R.drawable.ic_favorite_border_white_48dp);
                         int rowsDeleted = 0;
                         rowsDeleted = mContext.getContentResolver().delete(TvShowsContract.FavsShowEntry.CONTENT_URI,
@@ -118,15 +129,13 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.MyViewHold
                     }else {
                         imageButton.setImageResource(R.drawable.ic_favorite_white_48dp);
                         String episodeId = values.get(TvShowsContract.FavsShowEntry.COLUMN_EPISODE_ID).toString();
-                        String airdate = values.get(TvShowsContract.FavsShowEntry.COLUMN_AIR_DATE).toString();
-                        Log.v("EPISODE ID ONCLICK", episodeId + " " + airdate);
                         if (!episodeId.equals("N/A"))
                             sendDetailEpisodeRequest(UrlUtility.buildEpisodeUrl(episodeId), values);
                         else {
                             values.put(TvShowsContract.FavsShowEntry.COLUMN_EPISODE_NAME, "N/A");
                             values.put(TvShowsContract.FavsShowEntry.COLUMN_SEASON, "N/A");
                             values.put(TvShowsContract.FavsShowEntry.COLUMN_EPISODE_NUM, "N/A");
-                            values.put(TvShowsContract.FavsShowEntry.COLUMN_AIR_DATE, "N/A");
+                            values.put(TvShowsContract.FavsShowEntry.COLUMN_AIR_DATE, Long.MAX_VALUE);
                             values.put(TvShowsContract.FavsShowEntry.COLUMN_AIR_TIME, "N/A");
                             values.put(TvShowsContract.FavsShowEntry.COLUMN_SUMMARY, "N/A");
                             updateFavourites(values);
@@ -137,7 +146,7 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.MyViewHold
         }
     }
 
-    public static void sendDetailEpisodeRequest(String url, final ContentValues values) {
+    private void sendDetailEpisodeRequest(String url, final ContentValues values) {
         Log.v("ENTERED REQUEST JSON", "Entered request function with url " + url);
 
         episodeRequest = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
@@ -156,16 +165,17 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.MyViewHold
         requestQueue.add(episodeRequest);
     }
 
-    private static ContentValues parseShowDetailsResponse(JSONObject object, ContentValues values) {
+    private ContentValues parseShowDetailsResponse(JSONObject object, ContentValues values) {
         Log.v("ENTERED DETAIL JSON", "Entered function");
-        String airdate = "N/A", airtime, season, epiNumber, epiName, summary, epi_id;
+        String airtime, season, epiNumber, epiName, summary, epi_id;
+        long airdate;
         try {
             Log.v("FETCHING DATE DETAIL", "ENTERED TRY");
             epiName = object.getString("name");
             season = Integer.toString(object.getInt("season"));
             epiNumber = Integer.toString(object.getInt("number"));
-            airdate = object.getString("airdate");
-            Log.v("FETCHING DATE DETAIL", airdate);
+            airdate = Utility.getMillisFromStringDate(object.getString("airdate"));
+            Log.v("FETCHING DATE DETAIL", Utility.getDateFromMillis(airdate));
             airtime = object.getString("airtime");
             summary = object.getString("summary");
             values.put(TvShowsContract.FavsShowEntry.COLUMN_EPISODE_NAME, epiName);
@@ -181,7 +191,7 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.MyViewHold
         return values;
     }
 
-    private static void updateFavourites(ContentValues values) {
+    private void updateFavourites(ContentValues values) {
         Log.v("UPDATE DETAIL", "Updating episode details.");
         String episodeId = values.get(TvShowsContract.FavsShowEntry.COLUMN_EPISODE_ID).toString();
         Uri updated = mContext.getContentResolver().insert(TvShowsContract.FavsShowEntry.CONTENT_URI, values);
@@ -191,13 +201,4 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.MyViewHold
                 Toast.LENGTH_LONG).show();
     }
 
-    private static boolean isFavourite(ContentValues values){
-        Uri uri = TvShowsContract.FavsShowEntry.buildShowWithShowId(values.getAsString(TvShowsContract.FavsShowEntry.COLUMN_SHOW_ID));
-        Log.v("URI", "URI : " + uri);
-        mCursor = mContext.getContentResolver().query(uri, null, null, null, null);
-        Log.v("IS FAVOURITE?", "Search "+Integer.toString(mCursor.getCount()) + " " + values.getAsString(TvShowsContract.FavsShowEntry.COLUMN_SHOW_NAME));
-        if (mCursor.getCount() > 0)
-            return true;
-        return false;
-    }
 }
